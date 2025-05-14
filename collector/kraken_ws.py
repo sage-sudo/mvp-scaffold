@@ -16,9 +16,10 @@ import ssl
 
 ssl_context = ssl._create_unverified_context()
 
-KRAKEN_WS_URL = "wss://ws.kraken.com/"
+KRAKEN_WS_URL = "wss://ws.kraken.com"
 PAIR = "XBT/USD"
-INTERVAL = 60  # 60 minutes = 1-hour candles
+INTERVAL = 15  # 60 minutes = 1-hour candles
+opening = True
 
 def start_collector():
     async def connect_kraken():
@@ -30,7 +31,7 @@ def start_collector():
             }
             await ws.send(json.dumps(subscribe_msg))
 
-            print(f"Subscribed to {PAIR} 1-hour OHLC feed")
+            print(f"Subscribed to {PAIR} 1-hour OHLC feed")            
             
             async for message in ws:
                 await handle_message(message)
@@ -39,8 +40,12 @@ def start_collector():
         data = json.loads(message)
 
         # Ignore non-candle messages
-        if isinstance(data, list) and len(data) > 1 and data[-2] == 'ohlc-60':
+        if isinstance(data, list) and len(data) > 1 and data[-2] == 'ohlc-15':
             candle = data[1]
+            #if candle[7] == 1: 
+             #       print("Here's we were Stand", candle[7])
+              #      opening = False
+               #     websockets.Close()
             #ts = datetime.utcfromtimestamp(float(candle[0]))
             ts = datetime.fromtimestamp(float(candle[0]))
             open_, high, low, close = map(float, candle[1:5])
@@ -80,7 +85,7 @@ def start_collector():
             #--------------------------------------------------------------------------
 
     async def main():
-        while True:
+        while opening:
             try:
                 await connect_kraken()
             except Exception as e:
