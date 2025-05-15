@@ -1,5 +1,7 @@
 import duckdb  # or sqlite3 if that's what you're using
 from datetime import datetime
+from pathlib import Path
+
 
 # Store DB in project_root/data/candles.duckdb
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "market_data.duckdb"

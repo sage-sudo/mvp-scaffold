@@ -15,7 +15,7 @@ ssl_context = ssl._create_unverified_context()
 
 KRAKEN_WS_V2_URL = "wss://ws.kraken.com/v2"
 PAIR = "BTC/USD"
-INTERVAL = 1  # Minutes
+INTERVAL = 5  # Minutes
 
 def v2_start_collector():
     last_emitted_ts = None  # <-- Track last emitted candle time
@@ -54,7 +54,7 @@ def v2_start_collector():
                     if last_emitted_ts and ts <= last_emitted_ts:
                         # Duplicate or stale update — skip it
                         continue
-                    
+
 
                     # Finalized candle — emit and update state
                     open_ = float(candle["open"])

@@ -9,7 +9,8 @@ import threading
 def bootstrap_and_run():
     # Step 1: Bootstrap DB with 200 historical candles for EMA
     end = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    start = end - timedelta(minutes=200)  # You can extend this if you need longer history
+    start = end - timedelta(minutes=1000)  # You can extend this if you need longer history
+    print("Start:", start)
 
     print("⏳ Bootstrapping historical data...")
     fetch_ohlc_history(start, end)
