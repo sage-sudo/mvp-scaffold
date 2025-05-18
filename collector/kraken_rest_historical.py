@@ -5,13 +5,15 @@ from datetime import datetime, timedelta, timezone
 from storage.db import save_candle
 import time
 
+from dynamics.dynamic_params import ALL_INTERVAL, HISTORICAL_PAIR
+
 import ssl
 
 ssl_context = ssl._create_unverified_context()
 
 KRAKEN_REST_URL = "https://api.kraken.com/0/public/OHLC"
-PAIR = "XBTUSD"  # Kraken's weird naming, BTC/USD is XBTUSD
-INTERVAL = 5 # in minutes
+PAIR = HISTORICAL_PAIR  # Kraken's weird naming, BTC/USD is XBTUSD
+INTERVAL = ALL_INTERVAL # in minutes
 
 def fetch_ohlc_history(start_time: datetime, end_time: datetime):
     since_unix = int(start_time.timestamp())

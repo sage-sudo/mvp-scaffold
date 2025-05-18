@@ -11,11 +11,13 @@ from datetime import datetime
 from storage.db import save_candle
 import ssl
 
+from dynamics.dynamic_params import ALL_INTERVAL, LIVE_PAIR
+
 ssl_context = ssl._create_unverified_context()
 
 KRAKEN_WS_V2_URL = "wss://ws.kraken.com/v2"
-PAIR = "BTC/USD"
-INTERVAL = 5  # Minutes
+PAIR = LIVE_PAIR
+INTERVAL = ALL_INTERVAL  # Minutes
 
 def v2_start_collector():
     last_emitted_ts = None  # <-- Track last emitted candle time
@@ -67,6 +69,7 @@ def v2_start_collector():
                     save_candle(ts, open_, high, low, close, volume)
 
                     last_emitted_ts = ts
+
 
                 except Exception as e:
                     print(f"❌ Failed to process candle: {e}")
