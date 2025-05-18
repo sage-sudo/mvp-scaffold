@@ -1,13 +1,16 @@
 # bot/decision_engine.py
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import asyncio
 from datetime import datetime
 from strategy.ta import get_ta_signal
+
 # from strategy.ml import get_ml_signal  <-- Later if we add ML
 # from execution.binance_api import place_order  <-- Placeholder
+
 
 async def run_strategy_loop(interval_minutes=60):
     while True:
@@ -29,5 +32,5 @@ async def run_strategy_loop(interval_minutes=60):
 
         await asyncio.sleep(interval_minutes * 60)
 
-    #if __name__ == "__main__":
+    # if __name__ == "__main__":
     asyncio.run(run_strategy_loop())

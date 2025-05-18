@@ -2,6 +2,7 @@
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import asyncio
@@ -9,6 +10,8 @@ import json
 import websockets
 from datetime import datetime
 from storage.db import save_candle
+
+# from storage.test_db import save_candle
 import ssl
 
 from dynamics.dynamic_params import ALL_INTERVAL, LIVE_PAIR
@@ -19,6 +22,7 @@ KRAKEN_WS_V2_URL = "wss://ws.kraken.com/v2"
 PAIR = LIVE_PAIR
 INTERVAL = ALL_INTERVAL  # Minutes
 
+
 def v2_start_collector():
     last_emitted_ts = None  # <-- Track last emitted candle time
 
@@ -26,11 +30,7 @@ def v2_start_collector():
         async with websockets.connect(KRAKEN_WS_V2_URL, ssl=ssl_context) as ws:
             subscribe_msg = {
                 "method": "subscribe",
-                "params": {
-                    "channel": "ohlc",
-                    "symbol": [PAIR],
-                    "interval": INTERVAL
-                }
+                "params": {"channel": "ohlc", "symbol": [PAIR], "interval": INTERVAL},
             }
             await ws.send(json.dumps(subscribe_msg))
             print(f"📡 Subscribed to {PAIR} {INTERVAL}-minute OHLC feed (v2)")
@@ -57,7 +57,6 @@ def v2_start_collector():
                         # Duplicate or stale update — skip it
                         continue
 
-
                     # Finalized candle — emit and update state
                     open_ = float(candle["open"])
                     high = float(candle["high"])
@@ -65,11 +64,12 @@ def v2_start_collector():
                     close = float(candle["close"])
                     volume = float(candle["volume"])
 
-                    print(f"[{ts.isoformat()}] O: {open_}, H: {high}, L: {low}, C: {close}, V: {volume}")
+                    print(
+                        f"[{ts.isoformat()}] O: {open_}, H: {high}, L: {low}, C: {close}, V: {volume}"
+                    )
                     save_candle(ts, open_, high, low, close, volume)
 
                     last_emitted_ts = ts
-
 
                 except Exception as e:
                     print(f"❌ Failed to process candle: {e}")

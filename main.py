@@ -7,10 +7,13 @@ from dynamics.dynamic_params import START_AT_MINUTES
 
 import threading
 
+
 def bootstrap_and_run():
     # Step 1: Bootstrap DB with 200 historical candles for EMA
     end = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    start = end - timedelta(minutes=START_AT_MINUTES)  # You can extend this if you need longer history
+    start = end - timedelta(
+        minutes=START_AT_MINUTES
+    )  # You can extend this if you need longer history
     print("Start:", start)
 
     print("⏳ Bootstrapping historical data...")
@@ -24,6 +27,7 @@ def bootstrap_and_run():
     # Keep the main thread alive
     while True:
         pass  # Replace this with your strategy loop or a proper scheduler if needed
+
 
 if __name__ == "__main__":
     bootstrap_and_run()

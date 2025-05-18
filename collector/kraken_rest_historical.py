@@ -3,6 +3,8 @@
 import requests
 from datetime import datetime, timedelta, timezone
 from storage.db import save_candle
+
+# from storage.test_db import save_candle
 import time
 
 from dynamics.dynamic_params import ALL_INTERVAL, HISTORICAL_PAIR
@@ -13,7 +15,8 @@ ssl_context = ssl._create_unverified_context()
 
 KRAKEN_REST_URL = "https://api.kraken.com/0/public/OHLC"
 PAIR = HISTORICAL_PAIR  # Kraken's weird naming, BTC/USD is XBTUSD
-INTERVAL = ALL_INTERVAL # in minutes
+INTERVAL = ALL_INTERVAL  # in minutes
+
 
 def fetch_ohlc_history(start_time: datetime, end_time: datetime):
     since_unix = int(start_time.timestamp())
@@ -36,7 +39,7 @@ def fetch_ohlc_history(start_time: datetime, end_time: datetime):
                 raise Exception(f"Kraken API error: {data['error']}")
 
             result = data["result"]
-            
+
             # Find the actual candle key (Kraken likes to change it)
             candle_key = next((k for k in result.keys() if k != "last"), None)
 
@@ -61,7 +64,9 @@ def fetch_ohlc_history(start_time: datetime, end_time: datetime):
                 close = float(candle[4])
                 volume = float(candle[6])
 
-                print(f"[{ts}] O: {open_}, H: {high}, L: {low}, C: {close}, V: {volume}")
+                print(
+                    f"[{ts}] O: {open_}, H: {high}, L: {low}, C: {close}, V: {volume}"
+                )
                 save_candle(ts, open_, high, low, close, volume)
 
             # Kraken limits 720 candles per call (12 hours @ 1m)
@@ -75,6 +80,7 @@ def fetch_ohlc_history(start_time: datetime, end_time: datetime):
         except Exception as e:
             print(f"❌ Error fetching candles: {e}")
             time.sleep(5)  # back off and try again
+
 
 # 🔁 Fetch past 200 1m candles (for 200 EMA bootstrapping)
 # end = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
