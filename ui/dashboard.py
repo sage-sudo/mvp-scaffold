@@ -6,10 +6,6 @@ import plotly.graph_objs as go
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
 
-#from dynamics.dynamic_params import FILEX
-
-#DB_PATH = f"test_{FILEX}.duckdb"
-
 DB_PATH = "data/test_5_min.duckdb"
 
 def load_candles():
@@ -53,5 +49,5 @@ def update_chart(n):
 
     return fig
 
-if __name__ == "__main__":
-    app.run(debug=True, port=8050)
+#if __name__ == "__main__":
+    #app.run_server(debug=True, port=8050)

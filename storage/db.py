@@ -17,8 +17,7 @@ conn = duckdb.connect(str(DB_PATH))
 cursor = conn.cursor()
 
 # Make sure the table exists
-cursor.execute(
-    """
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS candles (
     timestamp TIMESTAMP PRIMARY KEY,
     open DOUBLE,
@@ -27,9 +26,7 @@ CREATE TABLE IF NOT EXISTS candles (
     close DOUBLE,
     volume DOUBLE
 )
-"""
-)
-
+""")
 
 def save_candle(ts: datetime, open_, high, low, close, volume):
     try:
@@ -38,20 +35,19 @@ def save_candle(ts: datetime, open_, high, low, close, volume):
             "SELECT COUNT(*) FROM candles WHERE timestamp = ?", (ts,)
         ).fetchone()
 
-        print(result)  # to-delete
+        print(result) # to-delete
 
         if result[0] == 0:
-            cursor.execute(
-                """
+            cursor.execute("""
                 INSERT INTO candles (timestamp, open, high, low, close, volume)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """,
-                (ts, open_, high, low, close, volume),
-            )
+            """, (ts, open_, high, low, close, volume))
 
             print(f"✅ Saved: {ts}")
         else:
             print(f"⏩ Skipped (duplicate): {ts}")
 
+
     except Exception as e:
         print(f"❌ Error saving candle: {e}")
+

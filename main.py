@@ -5,8 +5,9 @@ from collector.kraken_rest_historical import fetch_ohlc_history
 from collector.kraken_v2ws import v2_start_collector
 from dynamics.dynamic_params import START_AT_MINUTES
 
-import threading
+#from ui.dashboard import app
 
+import threading
 
 def bootstrap_and_run():
     # Step 1: Bootstrap DB with 200 historical candles for EMA
@@ -31,3 +32,6 @@ def bootstrap_and_run():
 
 if __name__ == "__main__":
     bootstrap_and_run()
+    #app.run_server(debug=True, port=8050)
+
+
