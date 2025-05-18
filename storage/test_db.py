@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import datetime
-from db.database_manager import DatabaseManager
+from mandb.database_manager import DatabaseManager
 
 db_manager = DatabaseManager()
 _started = False
