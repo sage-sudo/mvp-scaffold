@@ -1,0 +1,9 @@
+HISTORICAL_PAIR = "XBTUSD"
+
+LIVE_PAIR = "BTC/USD"
+
+START_AT_MINUTES = 200
+
+ALL_INTERVAL = 5  # in minutes
+
+FILEX = str(ALL_INTERVAL) + "_min"
