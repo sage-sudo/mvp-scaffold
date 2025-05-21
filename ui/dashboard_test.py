@@ -5,8 +5,9 @@ import pandas as pd
 import plotly.graph_objs as go
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
+from dynamics.dynamics_params_test import DB_PATH
 
-DB_PATH = "data/crypto.sqlite"
+DB_PATH = DB_PATH
 
 def load_candles():
     conn = sqlite3.connect(DB_PATH)

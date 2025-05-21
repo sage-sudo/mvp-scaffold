@@ -10,4 +10,4 @@ START_AT_MINUTES = 200  # For how far back to start backfilling, if needed
 
 # 📁 DB + File naming
 FILEX = f"{ALL_INTERVAL}_min"
-DB_PATH = f"data/crypto_{FILEX}.sqlite"
+DB_PATH = f"data/crypto2_{FILEX}.sqlite"
