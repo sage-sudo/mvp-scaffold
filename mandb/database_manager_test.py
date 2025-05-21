@@ -2,6 +2,7 @@
 
 import aiosqlite
 import asyncio
+import os
 
 class DatabaseManager:
     def __init__(self, db_path):
@@ -10,10 +11,10 @@ class DatabaseManager:
         self.running = False
 
     async def start(self):
-        if self.running:
-            return
-        self.running = True
-        # Create table on startup if not exists
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        print(f"📂 Connecting to DB: {self.db_path}")
+
+        # Create table if not exists (without pair and interval columns)
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS candles (
@@ -22,20 +23,19 @@ class DatabaseManager:
                     high REAL,
                     low REAL,
                     close REAL,
-                    volume REAL,
-                    pair TEXT,
-                    interval INTEGER
+                    volume REAL
                 )
             """)
             await db.commit()
-        # Start the write loop
+
+        self.running = True
         asyncio.create_task(self._writer_loop())
 
     async def _writer_loop(self):
         while self.running:
-            item = await self.queue.get()
+            candle = await self.queue.get()
             try:
-                await self._write_candle(item)
+                await self._write_candle(candle)
             except Exception as e:
                 print(f"❌ DB write error: {e}")
 
@@ -43,9 +43,9 @@ class DatabaseManager:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """
-                INSERT OR REPLACE INTO candles 
-                (timestamp, open, high, low, close, volume, pair, interval)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO candles
+                (timestamp, open, high, low, close, volume)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
                     candle["timestamp"].isoformat(),
@@ -53,12 +53,14 @@ class DatabaseManager:
                     candle["high"],
                     candle["low"],
                     candle["close"],
-                    candle["volume"],
-                    candle.get("pair", "UNKNOWN"),
-                    candle.get("interval", 0),
+                    candle["volume"]
                 )
             )
             await db.commit()
+
+    async def save_candle(self, candle):
+        # Deprecated: Use submit_write to queue writes safely
+        await self.submit_write(candle)
 
     async def submit_write(self, candle):
         await self.queue.put(candle)
