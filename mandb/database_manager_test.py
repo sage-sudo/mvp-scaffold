@@ -1,4 +1,4 @@
-# mandb/database_manager.py
+# mandb/database_manager_test.py
 
 import aiosqlite
 import asyncio
@@ -13,8 +13,6 @@ class DatabaseManager:
     async def start(self):
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         print(f"📂 Connecting to DB: {self.db_path}")
-
-        # Create table if not exists (without pair and interval columns)
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS candles (
@@ -23,11 +21,12 @@ class DatabaseManager:
                     high REAL,
                     low REAL,
                     close REAL,
-                    volume REAL
+                    volume REAL,
+                    pair TEXT,
+                    interval INTEGER
                 )
             """)
             await db.commit()
-
         self.running = True
         asyncio.create_task(self._writer_loop())
 
@@ -43,9 +42,9 @@ class DatabaseManager:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """
-                INSERT OR REPLACE INTO candles
-                (timestamp, open, high, low, close, volume)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO candles 
+                (timestamp, open, high, low, close, volume, pair, interval)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     candle["timestamp"].isoformat(),
@@ -53,16 +52,14 @@ class DatabaseManager:
                     candle["high"],
                     candle["low"],
                     candle["close"],
-                    candle["volume"]
+                    candle["volume"],
+                    candle.get("pair", "UNKNOWN"),
+                    candle.get("interval", 0)
                 )
             )
             await db.commit()
 
     async def save_candle(self, candle):
-        # Deprecated: Use submit_write to queue writes safely
-        await self.submit_write(candle)
-
-    async def submit_write(self, candle):
         await self.queue.put(candle)
 
     async def stop(self):

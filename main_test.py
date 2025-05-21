@@ -1,9 +1,11 @@
+# main_test.py
+
 import asyncio
+import threading
 from mandb.database_manager_test import DatabaseManager
 from collector.kraken_v2_ws_test import run_kraken_collector
 from ui.dashboard_test import build_dash_app
 from dynamics.dynamics_params_test import DB_PATH
-import threading
 
 db = DatabaseManager(DB_PATH)
 
@@ -15,7 +17,7 @@ async def main():
     collector_task = asyncio.create_task(run_kraken_collector(db))
 
     def run_dash():
-        app = build_dash_app(db)
+        app = build_dash_app()
         app.run(debug=False, use_reloader=False)
 
     dash_thread = threading.Thread(target=run_dash, daemon=True)

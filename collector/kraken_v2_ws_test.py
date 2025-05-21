@@ -1,4 +1,4 @@
-# collector/kraken_ws_v2.py
+# collector/kraken_v2_ws_test.py
 
 import asyncio
 import json
@@ -8,13 +8,12 @@ from datetime import datetime
 from dynamics.dynamics_params_test import ALL_INTERVAL, LIVE_PAIR
 
 ssl_context = ssl._create_unverified_context()
-
 KRAKEN_WS_V2_URL = "wss://ws.kraken.com/v2"
-PAIR = LIVE_PAIR  # Make sure LIVE_PAIR = "XBT/USD"
-INTERVAL = ALL_INTERVAL  # e.g. 5 for 5-min candles
+PAIR = LIVE_PAIR
+INTERVAL = ALL_INTERVAL
 
 async def run_kraken_collector(db):
-    last_emitted_ts = None  # Avoid duplicate writes
+    last_emitted_ts = None
 
     async def connect_kraken():
         nonlocal last_emitted_ts
@@ -22,65 +21,52 @@ async def run_kraken_collector(db):
         async with websockets.connect(KRAKEN_WS_V2_URL, ssl=ssl_context) as ws:
             subscribe_msg = {
                 "method": "subscribe",
-                "params": {"channel": "ohlc", "symbol": [PAIR], "interval": INTERVAL, "snapshot": True},
+                "params": {"channel": "ohlc", "symbol": [PAIR], "interval": INTERVAL},
             }
             await ws.send(json.dumps(subscribe_msg))
-            print(f"📡 Subscribed with message:\n{json.dumps(subscribe_msg, indent=2)}")
+            print("📡 Subscribed with message:\n" + json.dumps(subscribe_msg, indent=2))
 
             async for message in ws:
                 try:
                     data = json.loads(message)
-                    print(f"The message side is running:\n {data}")
+                    #print(f"The message part runs\n {data}")
                 except json.JSONDecodeError as e:
                     print(f"❌ JSON decode error: {e}")
                     continue
 
-                # Only handle OHLC snapshot data
-                if data.get("channel") == "ohlc" and data.get("type") in ["snapshot"]: # "update"
-                    for candle in data["data"]:
-                        try:
-                            ts_str = candle["interval_begin"].replace("Z", "+00:00")
-                            ts = datetime.fromisoformat(ts_str)
+                if data.get("channel") != "ohlc":
+                    continue
 
-                            if last_emitted_ts and ts <= last_emitted_ts:
-                                continue  # skip duplicates or old data
+                for candle in data.get("data", []):
+                    try:
+                        ts = datetime.fromisoformat(candle["interval_begin"].replace("Z", "+00:00"))
+                        if last_emitted_ts and ts <= last_emitted_ts:
+                            continue
 
-                            candle_dict = {
-                                "timestamp": ts,
-                                "open": float(candle["open"]),
-                                "high": float(candle["high"]),
-                                "low": float(candle["low"]),
-                                "close": float(candle["close"]),
-                                "volume": float(candle["volume"]),
-                            }
+                        candle_dict = {
+                            "timestamp": ts,
+                            "open": float(candle["open"]),
+                            "high": float(candle["high"]),
+                            "low": float(candle["low"]),
+                            "close": float(candle["close"]),
+                            "volume": float(candle["volume"]),
+                            "pair": PAIR,
+                            "interval": int(INTERVAL),
+                        }
 
-                            # Filter out suspicious candles
-                            if (
-                                candle_dict["high"] == candle_dict["low"] or
-                                candle_dict["volume"] == 0 or
-                                candle_dict["open"] == candle_dict["close"]
-                            ):
-                                print(f"⚠️ Skipping flat candle at {ts}:\n{json.dumps(candle, indent=2)}")
-                                continue
+                        if candle_dict["volume"] == 0:
+                            continue
 
-                            print(
-                                f"[{ts.isoformat()}] "
-                                f"O: {candle_dict['open']}, H: {candle_dict['high']}, "
-                                f"L: {candle_dict['low']}, C: {candle_dict['close']}, V: {candle_dict['volume']}"
-                            )
+                        print(f"✅ [{ts}] O: {candle_dict['open']}, C: {candle_dict['close']}, V: {candle_dict['volume']}")
+                        await db.save_candle(candle_dict)
+                        last_emitted_ts = ts
 
-                            # Submit candle to DB queue
-                            await db.submit_write(candle_dict)
-                            last_emitted_ts = ts
+                    except Exception as e:
+                        print(f"❌ Candle parse error: {e}\nCandle:\n{json.dumps(candle, indent=2)}")
 
-                        except Exception as e:
-                            print(f"❌ Candle parse error: {e}\nCandle Data:\n{json.dumps(candle, indent=2)}")
-
-    # Auto-reconnect loop
     while True:
         try:
             await connect_kraken()
         except Exception as e:
-            print(f"⚠️ Kraken WS error: {e} — retrying in 5s...")
+            print(f"⚠️ Kraken WS error: {e} — reconnecting in 5s...")
             await asyncio.sleep(5)
-
